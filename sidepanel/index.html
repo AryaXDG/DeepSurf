@@ -1,0 +1,31 @@
+<!--
+  Purpose: Primary layout structure and typography settings for the extension sidepanel UI.
+  Context: This document acts as the visual container shown inside the browser sidepanel dock,
+           injecting modern Outfit and DM Sans fonts and mounting the Svelte view layers.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSurf</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; width: 100%; overflow: hidden; }
+      body { background: #09090b; }
+    </style>
+  </head>
+  <body>
+    
+    <!-- Svelte Target: The DOM mount point where Svelte hooks elements during load. -->
+    <div id="app"></div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,85 @@
+/**
+ * Global Stylesheet & Tailwind Injection
+ *
+ * Serves as the CSS entry point for the DeepSurf extension. This file injects
+ * Tailwind's core layers and establishes global typographic and scrollbar defaults
+ * that apply uniformly across the entire extension UI.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * @layer base
+ * Base HTML element resets and typography definitions.
+ */
+@layer base {
+
+  /* * We explicitly set font-smoothing here because 'DM Sans' can render 
+   * slightly heavy or pixelated on macOS/iOS displays without it.
+   */
+  html {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* * Default browser scrollbars are bulky and clash with the dark UI theme.
+   * This forces a minimal, dark-themed scrollbar globally for WebKit browsers.
+   */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+  }
+}
+
+/**
+ * @layer utilities
+ * Custom utility classes extending the Tailwind design system.
+ */
+@layer utilities {
+
+  /* * Firefox uses the standard 'scrollbar-width' property, while WebKit requires
+   * pseudo-elements. This utility normalizes a thin scrollbar across all rendering engines.
+   */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #3f3f46 transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+    border-radius: 2px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+  }
+  
+  /* * Used for hiding scrollbars on specific containers (like horizontal tab navs)
+   * while still allowing the user to scroll via trackpad or mouse wheel.
+   */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,0 +1,17 @@
+<!--
+  Purpose: Hidden persistent background window for WebGPU model caching and local PGlite vector operations.
+  Context: This document acts as the engine room of the extension, holding persistent instances of
+           WebLLM and Xenova embedders to prevent GPU context loss or WebGPU device drops.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DeepSurf Offscreen</title>
+  </head>
+  <body>
+    
+    <!-- We import the module-level orchestrator JS file here to execute database and model setups. -->
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
