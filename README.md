@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/icons/logo.svg" alt="DeepSurf Logo" width="120" />
+  <img src="public/icons/logo.svg" alt="DeepSurf Logo" width="240" />
 </div>
 
 # DeepSurf History Manager
