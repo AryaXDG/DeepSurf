@@ -324,6 +324,8 @@ if (!SKIP_PATTERNS.some((p) => p.test(location.href))) {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === MSG.SPA_NAVIGATION) {
       console.log("[DeepSurf:Extractor] Received SPA_NAVIGATION — scheduling re-extraction.");
+      let ran = false;
+      const safeRun = () => { if (!ran) { ran = true; run(); } };
 
       // We use a MutationObserver with a debounce delay to identify client-side navigations on single-page apps (SPAs) where standard window load events do not fire.
       let spaDebounceTimer = null;
@@ -332,7 +334,7 @@ if (!SKIP_PATTERNS.some((p) => p.test(location.href))) {
         clearTimeout(spaDebounceTimer);
         spaDebounceTimer = setTimeout(() => {
           observer.disconnect();
-          run();
+          safeRun();
         }, 1000);
       });
 
@@ -344,7 +346,7 @@ if (!SKIP_PATTERNS.some((p) => p.test(location.href))) {
       setTimeout(() => {
         observer.disconnect();
         clearTimeout(spaDebounceTimer);
-        run();
+        safeRun();
       }, 4000);
     }
   });

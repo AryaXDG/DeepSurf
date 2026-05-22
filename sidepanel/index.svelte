@@ -226,7 +226,7 @@
       payload: {
         query: text,
         context: ctx,
-        history: buildContextWindow(chatHistory, 3000),
+        history: buildContextWindow(chatHistory.slice(0, -2), 3000),
       },
     });
   }
@@ -238,7 +238,9 @@
    */
   function abortChat() {
     chatPort?.postMessage({ type: MSG.CHAT_STREAM_ABORT });
-    streaming = false;
+    // Do NOT set streaming = false here.
+    // The offscreen will stop generating and the existing CHAT_DONE/CHAT_ERROR
+    // handler will set streaming = false when the engine actually stops.
     const last = chatHistory[chatHistory.length - 1];
     if (last?.streaming) {
       chatHistory = [...chatHistory.slice(0, -1), { ...last, streaming: false }];
@@ -289,7 +291,7 @@
     }
   }
 
-  let statusPollInterval = 0;
+  let statusPollInterval = $state(0);
   /** @type {IntersectionObserver | null} */
   let chatObserver = null;
 

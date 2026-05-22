@@ -285,8 +285,8 @@ async function rehydrate() {
 
     injectStyles();
 
+    const textMapObj = createTextMap(); 
     for (const highlight of response.data) {
-        const textMapObj = createTextMap(); 
         
         const bestMatch = findBestMatch(highlight, textMapObj);
         

@@ -635,6 +635,13 @@ async function streamChat({ query, context, history }) {
   try {
     console.log(`[DeepSurf] Starting local LLM stream for query: "${query}"`);
     const engine = await getLLM();
+    if (!engine) {
+      chrome.runtime.sendMessage({
+        type: MSG.CHAT_ERROR,
+        payload: { error: "On-device AI is not supported on this device. WebGPU is required." }
+      }).catch(() => {});
+      return;
+    }
     chatAborted = false;
 
     const hasData = context && context.length > 0;
@@ -687,7 +694,7 @@ async function streamChat({ query, context, history }) {
     clearInterval(tokenFlushInterval);
     flushTokenBuffer();
 
-    if (!chatAborted) chrome.runtime.sendMessage({ type: MSG.CHAT_DONE, payload: { fullText } }).catch((e) => {
+    chrome.runtime.sendMessage({ type: MSG.CHAT_DONE, payload: { fullText } }).catch((e) => {
       console.error("[DeepSurf:ERROR] Failed to send CHAT_DONE:", e);
     });
   } catch (e) {
@@ -941,8 +948,10 @@ async function canvasGetNodesByUrl({ url }) {
  */
 async function canvasDeleteNode({ nodeId }) {
   const pg = await initCanvasDB();
-  await pg.query("DELETE FROM canvas_edges WHERE source_id = $1 OR target_id = $1", [nodeId]);
-  await pg.query("DELETE FROM canvas_nodes WHERE id = $1", [nodeId]);
+  await pg.transaction(async (tx) => {
+    await tx.query("DELETE FROM canvas_edges WHERE source_id=$1 OR target_id=$1", [nodeId]);
+    await tx.query("DELETE FROM canvas_nodes WHERE id=$1", [nodeId]);
+  });
 }
 
 /**
@@ -1123,7 +1132,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       case MSG.PRUNE_HISTORY:        await pruneHistory(msg.payload); return { type: MSG.ACK };
       case MSG.SYNC_HISTORY:         await syncHistory(msg.payload); return { type: MSG.ACK };
 
-      case MSG.ANALYTICS_PULSE:
+      case MSG.ANALYTICS_PULSE: {
         console.log(`[DeepSurf] Processing analytics pulse for domain: ${msg.payload.domain}`);
         const pgAnalytics = await initDB();
         await pgAnalytics.query(`
@@ -1148,34 +1157,36 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           msg.payload.hasTextSelection
         ]);
         return { type: MSG.ACK };
+      }
 
-      case MSG.ANALYTICS_BATCH:
+      case MSG.ANALYTICS_BATCH: {
         console.log(`[DeepSurf] Processing analytics batch (${msg.payload.length} pulses)`);
         const pgBatch = await initDB();
-        for (const pulse of msg.payload) {
+        if (msg.payload.length > 0) {
+          const values = [];
+          const params = [];
+          for (let i = 0; i < msg.payload.length; i++) {
+            const p = msg.payload[i];
+            const offset = i * 12;
+            values.push(`($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9}, $${offset+10}, $${offset+11}, $${offset+12})`);
+            params.push(
+              p.id, p.sessionId, p.domain, cleanUrlForDb(p.url), p.timestamp, p.activeSeconds,
+              p.scrollPixelsTotal, p.scrollDirectionChanges, p.interactionCount, p.mouseDistancePx,
+              p.isMediaPlaying, p.hasTextSelection
+            );
+          }
           await pgBatch.query(`
             INSERT INTO telemetry_pulses (
               id, session_id, domain, url, timestamp, active_seconds, 
               scroll_pixels_total, scroll_direction_changes, interaction_count, 
               mouse_distance_px, is_media_playing, has_text_selection
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-          `, [
-            pulse.id,
-            pulse.sessionId,
-            pulse.domain, 
-            cleanUrlForDb(pulse.url), 
-            pulse.timestamp, 
-            pulse.activeSeconds, 
-            pulse.scrollPixelsTotal, 
-            pulse.scrollDirectionChanges,
-            pulse.interactionCount,
-            pulse.mouseDistancePx,
-            pulse.isMediaPlaying,
-            pulse.hasTextSelection
-          ]);
+            VALUES ${values.join(", ")}
+            ON CONFLICT (id) DO NOTHING
+          `, params);
         }
         return { type: MSG.ACK };
+      }
 
       case MSG.GET_BEHAVIORAL_STATS: {
         const pgStats = await initDB();
